@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 420" width="720" height="420">
+  <defs>
+    <linearGradient id="pb2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fff8e1"/><stop offset="100%" stop-color="#c8e6c9"/>
+    </linearGradient>
+  </defs>
+  <rect width="720" height="420" fill="url(#pb2)"/>
+  <circle cx="90" cy="360" r="130" fill="#ffffff" opacity=".35"/>
+  <circle cx="660" cy="60" r="90" fill="#ffffff" opacity=".3"/>
+
+  <!-- 农户 -->
+  <g transform="translate(160 210)">
+    <circle cx="0" cy="-40" r="46" fill="#f0c9a4"/>
+    <path d="M-58 -56 A58 58 0 0 1 58 -56 L58 -70 A58 58 0 0 0 -58 -70 Z" fill="#8d6e63"/>
+    <path d="M-62 -50 A62 40 0 0 1 62 -50 L62 -58 L-62 -58 Z" fill="#a1887f"/>
+    <path d="M-52 60 L52 60 L40 160 L-40 160 Z" fill="#43a047"/>
+    <rect x="-62" y="0" width="124" height="62" rx="26" fill="#2e7d32"/>
+  </g>
+
+  <!-- 银行职员 -->
+  <g transform="translate(520 210)">
+    <circle cx="0" cy="-40" r="46" fill="#f0c9a4"/>
+    <path d="M-46 -80 A46 46 0 0 1 46 -80 L46 -86 A46 46 0 0 0 -46 -86 Z" fill="#37474f"/>
+    <path d="M-52 60 L52 60 L40 160 L-40 160 Z" fill="#1b5e20"/>
+    <rect x="-62" y="0" width="124" height="62" rx="26" fill="#ffffff"/>
+    <rect x="-40" y="24" width="80" height="10" rx="5" fill="#c8e6c9"/>
+    <rect x="-40" y="42" width="52" height="10" rx="5" fill="#c8e6c9"/>
+  </g>
+
+  <!-- 握手 -->
+  <g transform="translate(340 190)">
+    <rect x="-70" y="-16" width="140" height="34" rx="17" fill="#f0c9a4"/>
+    <path d="M-70 -6 L-16 -6 L-16 18 L-70 18 Z" fill="#e0b58c"/>
+    <path d="M-30 -18 L30 -18" stroke="#fdd835" stroke-width="8" stroke-linecap="round"/>
+  </g>
+
+  <!-- 爱心/合作 -->
+  <g transform="translate(340 90)" fill="#e53935">
+    <path d="M0 34 C-32 14 -44 -6 -30 -20 C-19 -31 -4 -24 0 -14 C4 -24 19 -31 30 -20 C44 -6 32 14 0 34 Z"/>
+  </g>
+</svg>

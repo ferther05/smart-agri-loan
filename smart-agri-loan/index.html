@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智能惠农信贷系统 - 让金融活水浇灌田间地头</title>
+<meta name="description" content="智能惠农信贷系统，为农户、合作社、农业企业提供种植贷、养殖贷、农机贷、供应链贷等一站式融资服务。">
+<link rel="stylesheet" href="css/common.css">
+<link rel="stylesheet" href="css/index.css">
+</head>
+<body>
+
+<!-- ============ SVG 图标库 ============ -->
+<svg style="display:none" aria-hidden="true">
+  <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M17 8C8 10 5.9 16.17 3.82 21.34l1.89.66.95-2.3c.48.17.98.26 1.34.3V19c0-1.46-.31-2.7-.8-3.71.13.28.28.55.45.8C9.5 12.4 12.5 8.9 17 8zm0-6c-6 0-10 4.5-10 10 0 .5.05 1 .12 1.5C8.4 10.6 11.2 7 15 7c.9 0 1.7.15 2.4.4C18.6 4.4 20 2.9 22 2c-.9.9-1.6 2-2.1 3.2-.9-.3-1.9-.5-2.9-.2z"/></symbol>
+  <symbol id="i-cow" viewBox="0 0 24 24"><path d="M12 2c-2.8 0-5 2.2-5 5v1H6c-1.7 0-3 1.3-3 3v6c0 1.7 1.3 3 3 3h12c1.7 0 3-1.3 3-3v-6c0-1.7-1.3-3-3-3h-1V7c0-2.8-2.2-5-5-5zm-2.5 5c0-.6.4-1 1-1s1 .4 1 1v1h-2V7zm3 0c0-.6.4-1 1-1s1 .4 1 1v1h-2V7zM9.5 13c.8 0 1.5.7 1.5 1.5S10.3 16 9.5 16 8 15.3 8 14.5 8.7 13 9.5 13zm5 0c.8 0 1.5.7 1.5 1.5s-.7 1.5-1.5 1.5S13 15.3 13 14.5s.7-1.5 1.5-1.5z"/></symbol>
+  <symbol id="i-tractor" viewBox="0 0 24 24"><path d="M12 2c-1.7 0-3 1.3-3 3v2H6.5C5.1 7 4 8.1 4 9.5V13c0 3.3 2.7 6 6 6h2v-2h-2c-2.2 0-4-1.8-4-4v-2h4v7c0 1.7 1.3 3 3 3h5c1.7 0 3-1.3 3-3v-3h-2v3h-5v-9h6V7h-4V5c0-1.7-1.3-3-3-3zm0 2c.6 0 1 .4 1 1s-.4 1-1 1-1-.4-1-1 .4-1 1-1zM6.5 9h3v2h-2.6c-.2-.6-.3-1.3-.4-2zM19 9v2h2V9h-2z"/></symbol>
+  <symbol id="i-truck" viewBox="0 0 24 24"><path d="M3 4v11a3 3 0 0 0 3 3h1a3 3 0 0 0 6 0h4a3 3 0 0 0 3-3v-4l-3-4h-4V4H3zm11 3h2.9l2.1 2.8V15H14V7zM7 17a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm10 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/></symbol>
+  <symbol id="i-sprout" viewBox="0 0 24 24"><path d="M12 22v-8h2v8h-2zm-4 0v-6h2v6H8zM2 12c0-4 3-7 7-7h1v2H9c-2.8 0-5 2.2-5 5H2zm20 0h-2c0-2.8-2.2-5-5-5h-1V5h1c4 0 7 3 7 7zM12 5C9 5 7 3 7 1h2c0 .8.6 2 3 2V5z"/></symbol>
+  <symbol id="i-farm" viewBox="0 0 24 24"><path d="M12 3 2 11h3v9h6v-5h2v5h6v-9h3L12 3zm0 2.7 5 4.3V18h-2v-5H9v5H7v-8l5-4.3z"/></symbol>
+  <symbol id="i-money" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 4h2v2h1a2 2 0 0 1 2 2v1h-2v-1h-3V8h3a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-1v2h-2v-2h-3v-2h3a2 2 0 0 0 2-2v-2h-4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z"/></symbol>
+  <symbol id="i-bank" viewBox="0 0 24 24"><path d="M12 1 2 6v2h20V6L12 1zm-7 9v2h3v7h2v-7h4v7h2v-7h3v-2H5zm-2 10v2h18v-2H3z"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 1 3 5v6c0 5.6 3.8 10.7 9 12 5.2-1.3 9-6.4 9-12V5l-9-4zm0 2.2 7 3.1V11c0 4.5-2.9 8.6-7 9.8C7.9 19.6 5 15.5 5 11V6.3l7-3.1zm-1 12.3 5-5-1.4-1.4-3.6 3.6-1.6-1.6L8 12.9l3 2.6z"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0 2c-4 0-9 2-9 5v3h18v-3c0-3-5-5-9-5z"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v18h18V3H3zm4 14H5V11h2v6zm4 0H9V7h2v10zm4 0h-2v-7h2v7zm4 0h-2V9h2v8z"/></symbol>
+  <symbol id="i-match" viewBox="0 0 24 24"><path d="M10 3a4 4 0 0 0-3 6.6L3 14a1 1 0 0 0 1.4 1.4L8 11.6A4 4 0 1 0 10 3zm0 6a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm11 8h-2v-1a3 3 0 0 0-3-3h-2a3 3 0 0 0-3 3v1H9v-1a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v1z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><path d="M15.5 14h-.8l-.3-.3a6.5 6.5 0 1 0-.7.7l.3.3v.8l5 5 1.5-1.5-5-5zm-6 0a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/></symbol>
+  <symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="M15.4 7.4 14 6l-6 6 6 6 1.4-1.4L10.8 12l4.6-4.6z"/></symbol>
+  <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="M8.6 16.6 10 18l6-6-6-6-1.4 1.4L13.2 12l-4.6 4.6z"/></symbol>
+  <symbol id="i-arrow-up" viewBox="0 0 24 24"><path d="M12 6l-7 7 1.4 1.4L12 8.8l5.6 5.6L19 13l-7-7z"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M11 21h-1l1-7H7.5a.5.5 0 0 1-.4-.8l8-11a.5.5 0 0 1 .9.4l-1 6h3.5a.5.5 0 0 1 .4.8l-8 11z"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 5v5.6l4 2.4-.8 1.4-5.2-3V7h2z"/></symbol>
+  <symbol id="i-handshake" viewBox="0 0 24 24"><path d="M11 3 8 6H5a2 2 0 0 0-2 2v2l4-1v3l4-2V9l-2 1-3-1H4V8h2l3-3 3-3zm2 0 3 3h3a2 2 0 0 1 2 2v2l-4-1v3l-4-2V9l2 1 3-1h-2l-3-3-3-3zM2 13l4 2 3-1 2 1 2-1 3 1 4-2v3l-4 2-3-1-2 1-2-1-3 1-4-2v-3z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 4a6 6 0 1 1 0 12 6 6 0 0 1 0-12zm0 4a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/></symbol>
+</svg>
+
+<!-- ============ 顶部公告 ============ -->
+<div class="topbar">
+  <div class="container">
+    <div class="topbar-left">
+      <svg width="16" height="16" fill="#fdd835"><use href="#i-bolt"/></svg>
+      <span>春耕备耕专项信贷通道已开启，<b>财政贴息最高 3%</b>，额度有限先到先得</span>
+    </div>
+    <div class="topbar-right">
+      <span data-api="下载App">下载 App</span>
+      <span data-api="网点查询">网点查询</span>
+      <span data-api="客服咨询">客服 95599</span>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 头部导航 ============ -->
+<header class="header" id="header">
+  <div class="container">
+    <a href="index.html" class="logo">
+      <span class="logo-mark"><svg><use href="#i-sprout"/></svg></span>
+      <span class="logo-text">
+        <h1>智能惠农信贷</h1>
+        <p>SMART AGRI LOAN</p>
+      </span>
+    </a>
+
+    <nav class="nav">
+      <a href="index.html" class="is-active">首页</a>
+      <a href="#" data-api="贷款服务">贷款服务</a>
+      <a href="#" data-api="新闻资讯">新闻资讯</a>
+      <a href="#" data-api="个人中心">个人中心</a>
+      <a href="#" data-api="银行中心">银行中心</a>
+      <a href="#" data-api="管理员中心">管理员中心</a>
+    </nav>
+
+    <div class="header-actions">
+      <label class="search-box">
+        <svg><use href="#i-search"/></svg>
+        <input type="text" id="searchInput" placeholder="搜索贷款产品 / 政策">
+      </label>
+      <button class="btn btn--ghost btn--sm" data-api="登录">登录</button>
+      <button class="btn btn--primary btn--sm" data-api="注册">免费注册</button>
+    </div>
+  </div>
+</header>
+
+<!-- ============ 轮播 ============ -->
+<section class="hero container">
+  <div class="hero-wrap" id="heroWrap">
+    <div class="slide is-active">
+      <img src="assets/images/banner-1.svg" alt="智慧农田无人机植保">
+      <div class="slide-mask"></div>
+      <div class="slide-content">
+        <span class="slide-tagline"><svg width="14" height="14" fill="currentColor"><use href="#i-bolt"/></svg>数字农业 · 科技赋能</span>
+        <h2 class="slide-title">智慧农贷<br><em>一秒测算 三日放款</em></h2>
+        <p class="slide-desc">基于遥感影像与经营数据的信用评价模型，让每一寸耕地都能成为可衡量的资产，让金融活水精准滴灌田间地头。</p>
+        <div class="slide-btns">
+          <button class="btn btn--accent" data-api="立即申请">立即申请</button>
+          <button class="btn btn--ghost" style="background:rgba(255,255,255,.16);color:#fff;border-color:rgba(255,255,255,.45)" data-api="智能匹配">智能匹配</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide">
+      <img src="assets/images/banner-2.svg" alt="温室大棚与粮仓">
+      <div class="slide-mask"></div>
+      <div class="slide-content">
+        <span class="slide-tagline"><svg width="14" height="14" fill="currentColor"><use href="#i-target"/></svg>专属产品 · 覆盖全产业链</span>
+        <h2 class="slide-title">从大棚到粮仓<br><em>全周期资金支持</em></h2>
+        <p class="slide-desc">种植贷、养殖贷、农机贷、冷链仓储贷、供应链贷五大产品体系，覆盖农业生产、加工、流通全链条融资需求。</p>
+        <div class="slide-btns">
+          <button class="btn btn--accent" data-api="查看贷款产品">查看产品</button>
+          <button class="btn btn--ghost" style="background:rgba(255,255,255,.16);color:#fff;border-color:rgba(255,255,255,.45)" data-api="发布贷款需求">发布需求</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide">
+      <img src="assets/images/banner-3.svg" alt="惠农金融信贷">
+      <div class="slide-mask"></div>
+      <div class="slide-content">
+        <span class="slide-tagline"><svg width="14" height="14" fill="currentColor"><use href="#i-shield"/></svg>财政贴息 · 降低融资成本</span>
+        <h2 class="slide-title">年化利率低至<br><em>3.15%</em></h2>
+        <p class="slide-desc">联合 42 家涉农金融机构，落实中央财政贴息政策，免抵押、纯信用、随借随还，切实降低新型农业经营主体融资成本。</p>
+        <div class="slide-btns">
+          <button class="btn btn--accent" data-api="测算我的额度">测算额度</button>
+          <button class="btn btn--ghost" style="background:rgba(255,255,255,.16);color:#fff;border-color:rgba(255,255,255,.45)" data-api="查看贴息政策">贴息政策</button>
+        </div>
+      </div>
+    </div>
+
+    <button class="hero-arrow hero-arrow--prev" id="heroPrev" aria-label="上一张"><svg><use href="#i-chevron-left"/></svg></button>
+    <button class="hero-arrow hero-arrow--next" id="heroNext" aria-label="下一张"><svg><use href="#i-chevron-right"/></svg></button>
+    <div class="hero-dots" id="heroDots"></div>
+  </div>
+
+  <!-- 数据概览 -->
+  <div class="stats reveal">
+    <div class="stat-item">
+      <span class="stat-icon g"><svg><use href="#i-money"/></svg></span>
+      <div>
+        <div class="stat-num"><b class="counter" data-target="128.6">0</b><small>亿元</small></div>
+        <div class="stat-label">累计惠农放款</div>
+      </div>
+    </div>
+    <div class="stat-item">
+      <span class="stat-icon y"><svg><use href="#i-user"/></svg></span>
+      <div>
+        <div class="stat-num"><b class="counter" data-target="36.8">0</b><small>万户</small></div>
+        <div class="stat-label">服务农户及主体</div>
+      </div>
+    </div>
+    <div class="stat-item">
+      <span class="stat-icon r"><svg><use href="#i-bank"/></svg></span>
+      <div>
+        <div class="stat-num"><b class="counter" data-target="42">0</b><small>家</small></div>
+        <div class="stat-label">合作涉农金融机构</div>
+      </div>
+    </div>
+    <div class="stat-item">
+      <span class="stat-icon g"><svg><use href="#i-clock"/></svg></span>
+      <div>
+        <div class="stat-num"><b class="counter" data-target="1.8">0</b><small>天</small></div>
+        <div class="stat-label">平均审批放款时长</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 快捷入口 ============ -->
+<section class="section" style="padding-bottom:0">
+  <div class="container">
+    <div class="quick reveal">
+      <button class="quick-item" data-api="贷款申请">
+        <span class="quick-icon"><svg><use href="#i-doc"/></svg></span>
+        <h3>贷款申请</h3>
+        <p>在线填单 · 进度可查</p>
+      </button>
+      <button class="quick-item" data-api="智能匹配">
+        <span class="quick-icon" style="background:linear-gradient(135deg,#f9a825,#fdd835)"><svg><use href="#i-match"/></svg></span>
+        <h3>智能匹配</h3>
+        <p>AI 推荐最优方案</p>
+      </button>
+      <button class="quick-item" data-api="发布贷款需求">
+        <span class="quick-icon" style="background:linear-gradient(135deg,#e53935,#ff7043)"><svg><use href="#i-target"/></svg></span>
+        <h3>发布需求</h3>
+        <p>银行主动来找你</p>
+      </button>
+      <button class="quick-item" data-api="政策查询">
+        <span class="quick-icon" style="background:linear-gradient(135deg,#00897b,#4db6ac)"><svg><use href="#i-shield"/></svg></span>
+        <h3>政策查询</h3>
+        <p>贴息补贴一键查</p>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 贷款产品展示 ============ -->
+<section class="section" id="products">
+  <div class="container">
+    <div class="section-head reveal">
+      <div>
+        <h2 class="section-title">热门贷款产品</h2>
+        <p class="section-sub">精选 6 款涉农专属产品，额度高、利率低、审批快，支持纯信用免抵押</p>
+      </div>
+      <a href="#" class="section-more" data-api="查看更多产品">查看全部产品 <svg width="14" height="14" fill="currentColor"><use href="#i-chevron-right"/></svg></a>
+    </div>
+
+    <div class="tabs reveal" id="productTabs" style="margin-bottom:26px">
+      <button class="tab is-active" data-type="all">全部产品</button>
+      <button class="tab" data-type="plant">种植贷</button>
+      <button class="tab" data-type="breed">养殖贷</button>
+      <button class="tab" data-type="machine">农机贷</button>
+      <button class="tab" data-type="chain">供应链贷</button>
+    </div>
+
+    <div class="products" id="productList"></div>
+  </div>
+</section>
+
+<!-- ============ 贷款计算器 ============ -->
+<section class="section section--gray" id="calculator">
+  <div class="container">
+    <div class="section-head reveal">
+      <div>
+        <h2 class="section-title">贷款计算器</h2>
+        <p class="section-sub">输入金额与期限，实时测算月供与利息，帮您选择最合适的还款方式</p>
+      </div>
+    </div>
+
+    <div class="calc reveal">
+      <div class="calc-form">
+        <h3 class="calc-title">测算您的还款方案</h3>
+        <p class="calc-tip">测算结果仅供参考，实际以银行审批结果为准</p>
+
+        <div class="field">
+          <div class="field-label"><span>贷款金额</span><span style="color:var(--green-600);font-weight:700" id="amountEcho">300,000 元</span></div>
+          <label class="field-input">
+            <input type="number" id="amountInput" value="300000" min="10000" max="3000000" step="10000">
+            <span>元</span>
+          </label>
+          <input type="range" class="slider" id="amountSlider" min="10000" max="3000000" step="10000" value="300000">
+          <div class="slider-range"><span>1 万</span><span>300 万</span></div>
+        </div>
+
+        <div class="field">
+          <div class="field-label"><span>贷款期限</span></div>
+          <div class="chips" id="termChips">
+            <button class="chip" data-term="6">6 个月</button>
+            <button class="chip" data-term="12">12 个月</button>
+            <button class="chip is-active" data-term="24">24 个月</button>
+            <button class="chip" data-term="36">36 个月</button>
+            <button class="chip" data-term="60">60 个月</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="field-label"><span>年化利率</span></div>
+          <div class="chips" id="rateChips">
+            <button class="chip" data-rate="3.15">3.15% 贴息</button>
+            <button class="chip is-active" data-rate="3.65">3.65% 惠农</button>
+            <button class="chip" data-rate="4.35">4.35% 标准</button>
+            <button class="chip" data-rate="5.60">5.60% 信用</button>
+          </div>
+        </div>
+
+        <div class="field" style="margin-bottom:8px">
+          <div class="field-label"><span>还款方式</span></div>
+          <div class="chips" id="methodChips">
+            <button class="chip is-active" data-method="equal">等额本息</button>
+            <button class="chip" data-method="interest">先息后本</button>
+            <button class="chip" data-method="once">到期一次性还本付息</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="calc-result">
+        <h3 class="calc-title">测算结果</h3>
+        <p class="calc-tip" id="calcSummary">30 万元 · 24 期 · 年化 3.65%</p>
+
+        <div class="result-main">
+          <div class="ring" id="ring" style="--pct:12%">
+            <div class="ring-inner">
+              <b id="ringPct">12%</b>
+              <span>利息占比</span>
+            </div>
+          </div>
+          <div>
+            <div class="monthly-label">每月应还（参考）</div>
+            <div class="monthly-num">¥ <span id="monthlyPay">0</span></div>
+            <div class="monthly-desc" id="monthlyDesc">等额本息 · 每月固定还款</div>
+          </div>
+        </div>
+
+        <div class="result-grid">
+          <div class="result-cell"><span>贷款总额</span><b id="totalPrincipal">¥ 0</b></div>
+          <div class="result-cell y"><span>支付利息</span><b id="totalInterest">¥ 0</b></div>
+          <div class="result-cell"><span>本息合计</span><b id="totalRepay">¥ 0</b></div>
+          <div class="result-cell"><span>还款期数</span><b id="totalTerm">24 期</b></div>
+        </div>
+
+        <button class="btn btn--accent btn--block" data-api="申请该方案">申请该方案</button>
+        <p class="calc-note">
+          * 等额本息：每月还款额固定；先息后本：每月仅还利息，到期归还本金；到期一次性还本付息：到期一次性结清本息。<br>
+          * 实际利率以银行最终审批为准，部分产品可享受财政贴息。
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 新闻资讯 ============ -->
+<section class="section" id="news">
+  <div class="container">
+    <div class="section-head reveal">
+      <div>
+        <h2 class="section-title">新闻资讯</h2>
+        <p class="section-sub">聚焦农业产业动态与惠农金融政策，第一时间掌握行业风向</p>
+      </div>
+      <a href="#" class="section-more" data-api="进入资讯中心">进入资讯中心 <svg width="14" height="14" fill="currentColor"><use href="#i-chevron-right"/></svg></a>
+    </div>
+
+    <div class="tabs reveal" id="newsTabs" style="margin-bottom:22px">
+      <button class="tab is-active" data-news="agri">最新农业资讯</button>
+      <button class="tab" data-news="loan">助农贷款资讯</button>
+    </div>
+
+    <div class="news reveal">
+      <div class="news-list" id="newsList"></div>
+      <div class="news-side">
+        <a class="news-feature" href="#" data-api="查看资讯详情">
+          <img src="assets/images/news-2.svg" alt="春耕生产">
+          <div class="news-feature-mask">
+            <h3>全国春耕生产全面展开 智慧农机成为主力军</h3>
+            <p>2026-09-01 · 农业要闻</p>
+          </div>
+        </a>
+        <div class="news-top">
+          <h4><i></i>热门排行榜</h4>
+          <div id="hotRank"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 最新政策资讯 ============ -->
+<section class="section section--gray" id="policy">
+  <div class="container">
+    <div class="section-head reveal">
+      <div>
+        <h2 class="section-title">最新政策资讯</h2>
+        <p class="section-sub">权威解读惠农金融政策，让政策红利直达经营主体</p>
+      </div>
+      <a href="#" class="section-more" data-api="查看全部政策">查看全部政策 <svg width="14" height="14" fill="currentColor"><use href="#i-chevron-right"/></svg></a>
+    </div>
+    <div class="policies" id="policyList"></div>
+  </div>
+</section>
+
+<!-- ============ 合作机构 ============ -->
+<section class="section" style="padding-top:0">
+  <div class="container">
+    <div class="banks reveal">
+      <div class="bank-item"><span class="bank-dot"></span>中国农业银行</div>
+      <div class="bank-item"><span class="bank-dot" style="background:var(--yellow-500)"></span>农村信用合作社</div>
+      <div class="bank-item"><span class="bank-dot" style="background:var(--red-500)"></span>中国邮政储蓄银行</div>
+      <div class="bank-item"><span class="bank-dot"></span>农业发展银行</div>
+      <div class="bank-item"><span class="bank-dot" style="background:var(--yellow-500)"></span>各地农商银行</div>
+      <button class="btn btn--ghost btn--sm" data-api="申请成为合作机构">成为合作机构</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 底部 ============ -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <a href="index.html" class="logo">
+          <span class="logo-mark"><svg><use href="#i-sprout"/></svg></span>
+          <span class="logo-text"><h1>智能惠农信贷</h1><p>SMART AGRI LOAN</p></span>
+        </a>
+        <p>以数字技术重塑农村金融服务，让信用可量化、让融资更便捷、让农业更有奔头。平台已覆盖全国 28 个省（区、市）1600 余个县域网点。</p>
+        <button class="btn btn--accent btn--sm" data-api="下载App">下载移动端 App</button>
+      </div>
+      <div>
+        <h4>贷款服务</h4>
+        <ul class="footer-links">
+          <li><a href="#" data-api="种植贷">种植贷</a></li>
+          <li><a href="#" data-api="养殖贷">养殖贷</a></li>
+          <li><a href="#" data-api="农机贷">农机贷</a></li>
+          <li><a href="#" data-api="供应链贷">供应链贷</a></li>
+          <li><a href="#" data-api="发布贷款需求">发布需求</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>关于平台</h4>
+        <ul class="footer-links">
+          <li><a href="#" data-api="平台介绍">平台介绍</a></li>
+          <li><a href="#" data-api="新闻资讯">新闻资讯</a></li>
+          <li><a href="#" data-api="政策解读">政策解读</a></li>
+          <li><a href="#" data-api="合作机构">合作机构</a></li>
+          <li><a href="#" data-api="帮助中心">帮助中心</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>联系我们</h4>
+        <ul class="footer-contact">
+          <li>服务热线：95599</li>
+          <li>邮箱：agri-loan@example.com</li>
+          <li>地址：内蒙古自治区呼和浩特市</li>
+          <li>工作时间：周一至周日 8:30-18:00</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 智能惠农信贷系统 · 版权所有</span>
+      <span>本平台信息仅供参考，贷款审批结果以金融机构最终审核为准</span>
+    </div>
+  </div>
+</footer>
+
+<!-- 返回顶部 -->
+<button class="to-top" id="toTop" aria-label="返回顶部"><svg width="20" height="20" fill="currentColor"><use href="#i-arrow-up"/></svg></button>
+
+<!-- 接口调用弹窗 -->
+<div class="api-mask" id="apiMask">
+  <div class="api-dialog">
+    <div class="api-icon"><svg><use href="#i-check"/></svg></div>
+    <div class="api-title">接口调用提示</div>
+    <div class="api-name" id="apiName">立即申请！</div>
+    <div class="api-desc">后端接口尚未接入，正式环境将调用对应接口</div>
+    <button class="btn btn--primary btn--block api-close" id="apiClose">我知道了</button>
+  </div>
+</div>
+
+<script src="js/common.js"></script>
+<script src="js/index.js"></script>
+</body>
+</html>
