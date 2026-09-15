@@ -1,0 +1,42 @@
+server:
+  port: 8080
+  servlet:
+    encoding:
+      charset: UTF-8
+      force: true
+
+spring:
+  application:
+    name: smart-agri-loan-server
+
+  # 使用 MySQL（连接信息见 application-mysql.yml，建库建表脚本见 db/schema.sql）
+  profiles:
+    active: mysql
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  jackson:
+    date-format: yyyy-MM-dd HH:mm
+    time-zone: GMT+8
+    default-property-inclusion: non_null
+
+app:
+  jwt:
+    # HS256 密钥，长度必须 >= 32 字节；生产环境请通过环境变量覆盖
+    secret: smart-agri-loan-jwt-secret-key-2026-keep-it-long-and-safe
+    # token 有效期（分钟）
+    expire-minutes: 720
+  cors:
+    # 前端静态页面地址（本地预览常用 8090，留 * 便于直接双击打开）
+    allowed-origins: "*"
+
+logging:
+  level:
+    com.agriloan: info
