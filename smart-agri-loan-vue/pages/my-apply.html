@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>我的申请 - 智能惠农信贷系统</title>
+  <link rel="stylesheet" href="../css/common.css" />
+  <link rel="stylesheet" href="../css/pages.css" />
+</head>
+<body>
+  <div id="app" v-cloak>
+    <app-header active="apply"></app-header>
+
+    <main class="page">
+      <div class="container">
+        <section class="page-banner">
+          <h1>我的贷款申请</h1>
+          <p>查看本人提交的贷款申请与办理进度，可在进度条下方完成模拟签约、放款与还款操作，形成完整业务闭环。</p>
+        </section>
+
+        <section class="section">
+          <div class="stat-grid">
+            <div class="stat-card">
+              <div class="stat-icon">单</div>
+              <div>
+                <div class="stat-value">{{ myList.length }}<span class="stat-unit"> 笔</span></div>
+                <div class="stat-label">累计申请</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">审</div>
+              <div>
+                <div class="stat-value">{{ processingCount }}<span class="stat-unit"> 笔</span></div>
+                <div class="stat-label">审批中</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">放</div>
+              <div>
+                <div class="stat-value">{{ loanedCount }}<span class="stat-unit"> 笔</span></div>
+                <div class="stat-label">已放款</div>
+              </div>
+            </div>
+            <div class="stat-card balance-card">
+              <div class="stat-icon">额</div>
+              <div class="balance-main">
+                <div class="stat-value">{{ U.money(user.balance) }}<span class="stat-unit"> 元</span></div>
+                <div class="stat-label">
+                  账户余额
+                  <button class="btn btn-text btn-mini" @click="recharge">账户充值 +10000</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div class="news-tabs">
+          <button class="chip chip-lg" :class="{ active: activeStatus === '' }" @click="activeStatus = ''">
+            全部（{{ myList.length }}）
+          </button>
+          <button
+            class="chip chip-lg"
+            v-for="s in statusList"
+            :key="s"
+            :class="{ active: activeStatus === s }"
+            @click="activeStatus = s"
+          >{{ s }}（{{ countOf(s) }}）</button>
+          <label class="switch">
+            <input type="checkbox" v-model="onlyMine" />
+            <span>仅看本人申请</span>
+          </label>
+        </div>
+
+        <section class="apply-list" v-if="filteredList.length">
+          <article
+            class="apply-item card"
+            v-for="item in filteredList"
+            :key="item.id"
+            :class="{ highlight: item.id === focusId }"
+          >
+            <div class="apply-head">
+              <div>
+                <div class="apply-name">{{ item.productName }}</div>
+                <div class="apply-sub">编号 {{ item.id }} ｜ {{ item.applicantName }} ｜ {{ item.applyTime }}</div>
+              </div>
+              <span :class="U.statusTagClass(item.status)">{{ item.status }}</span>
+            </div>
+
+            <div class="apply-info">
+              <div><span>申请金额</span><b class="text-primary">{{ U.thousand(item.amount) }} 元</b></div>
+              <div><span>申请期限</span><b>{{ item.term }} 个月</b></div>
+              <div><span>年化利率</span><b>{{ item.rate }}%</b></div>
+              <div><span>应还本息</span><b>{{ U.money(repayTotalOf(item)) }} 元</b></div>
+              <div><span>贷款用途</span><b>{{ item.purpose }}</b></div>
+              <div><span>最近更新</span><b>{{ item.updateTime }}</b></div>
+            </div>
+
+            <!-- 四步进度条：不同状态点亮不同颜色 -->
+            <div class="progress-flow" v-if="item.status !== STATUS.REJECTED">
+              <div
+                class="flow-item"
+                v-for="(s, i) in flowSteps"
+                :key="s.status"
+                :class="['flow-' + s.color, flowState(item, i)]"
+              >
+                <div class="flow-dot">{{ flowState(item, i) === 'done' ? '√' : i + 1 }}</div>
+                <div class="flow-text">{{ s.label }}</div>
+              </div>
+              <div class="flow-item flow-green" :class="{ done: item.status === STATUS.SETTLED }">
+                <div class="flow-dot">{{ item.status === STATUS.SETTLED ? '√' : 5 }}</div>
+                <div class="flow-text">结清</div>
+              </div>
+            </div>
+            <div class="flow-tip" v-if="item.status !== STATUS.REJECTED">{{ flowTip(item) }}</div>
+
+            <div class="apply-reject" v-if="item.status === STATUS.REJECTED">
+              审批意见：{{ item.auditOpinion || '未填写' }}（{{ item.auditTime || '-' }}）
+            </div>
+            <div class="apply-reject reject-error" v-if="errorMap[item.id]">{{ errorMap[item.id] }}</div>
+
+            <!-- 闭环操作区 -->
+            <div class="apply-actions" v-if="isMine(item)">
+              <button
+                class="btn btn-text btn-sm"
+                v-if="item.status === STATUS.PENDING_FIRST"
+                :disabled="acting === item.id"
+                @click="doWithdraw(item)"
+              >{{ acting === item.id ? '撤回中...' : '撤回申请' }}</button>
+              <button
+                class="btn btn-primary btn-sm"
+                v-if="item.status === STATUS.FIRST_PASS"
+                :disabled="acting === item.id"
+                @click="doSign(item)"
+              >{{ acting === item.id ? '签约中...' : '在线签约' }}</button>
+              <button
+                class="btn btn-primary btn-sm"
+                v-if="item.status === STATUS.SIGNED"
+                :disabled="acting === item.id"
+                @click="doLoan(item)"
+              >{{ acting === item.id ? '放款中...' : '确认放款（资金入账）' }}</button>
+              <button
+                class="btn btn-primary btn-sm"
+                v-if="item.status === STATUS.LOANED"
+                :disabled="acting === item.id"
+                @click="doRepay(item)"
+              >{{ acting === item.id ? '还款中...' : '立即还款（应还 ' + U.money(repayTotalOf(item)) + ' 元）' }}</button>
+              <span class="tag tag-success" v-if="item.status === STATUS.SETTLED">
+                已于 {{ item.settleTime }} 结清，归还 {{ U.money(item.repayAmount) }} 元
+              </span>
+            </div>
+
+            <div class="apply-foot">
+              <button class="btn btn-text" @click="toggleLogs(item.id)">
+                {{ expanded === item.id ? '收起流转记录' : '查看流转记录' }}
+              </button>
+              <a class="btn btn-text" href="apply.html">再申请一笔</a>
+            </div>
+
+            <ul class="log-list" v-if="expanded === item.id">
+              <li v-for="(log, i) in item.logs" :key="i">
+                <span class="log-time">{{ log.time }}</span>
+                <span class="log-action">{{ log.action }}</span>
+                <span class="log-note">{{ log.note }}</span>
+              </li>
+            </ul>
+          </article>
+        </section>
+
+        <div class="empty" v-else>
+          <div class="empty-icon">无</div>
+          暂无相关申请记录
+          <div class="mt-16"><a class="btn btn-primary btn-sm" href="apply.html">立即申请贷款</a></div>
+        </div>
+      </div>
+    </main>
+
+    <app-footer></app-footer>
+  </div>
+
+  <script src="../vendor/vue.global.prod.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/constants.js"></script>
+  <script src="../js/db.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/components.js"></script>
+  <script src="../js/my-apply.js"></script>
+</body>
+</html>

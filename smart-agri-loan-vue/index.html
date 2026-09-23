@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>智能惠农信贷系统 - 首页</title>
+  <link rel="stylesheet" href="css/common.css" />
+  <link rel="stylesheet" href="css/pages.css" />
+</head>
+<body>
+  <div id="app" v-cloak>
+    <!-- 公共导航栏 -->
+    <app-header active="home"></app-header>
+
+    <main class="page">
+      <div class="container">
+        <!-- 首屏 Banner -->
+        <section class="hero">
+          <div class="hero-text">
+            <span class="hero-badge">数字金融 · 惠农助农</span>
+            <h1>让每一份耕耘，都能获得金融活水</h1>
+            <p>
+              智能惠农信贷系统面向农户、家庭农场、农民专业合作社与农业企业，提供贷款产品展示、
+              线上申请、信用积分评估与业务进度跟踪的一站式融资服务。
+            </p>
+            <div class="hero-actions">
+              <a class="btn btn-primary btn-lg" href="pages/products.html">浏览贷款产品</a>
+              <a v-if="user" class="btn btn-outline btn-lg" href="pages/credit.html">查看我的信用</a>
+              <a v-else class="btn btn-outline btn-lg" href="pages/login.html">登录 / 注册</a>
+            </div>
+          </div>
+
+          <!-- 已登录：按信用等级自适应展示（等级不同，权益与提示不同） -->
+          <div class="hero-card card card-pad" v-if="user">
+            <div class="hero-card-title">我的信用概览</div>
+            <div class="hero-score">{{ user.creditScore }}</div>
+            <div class="hero-score-meta">
+              信用等级 <span class="tag tag-primary">{{ user.creditLevel }}</span>
+              {{ user.creditComment }}
+            </div>
+            <ul class="hero-benefits" v-if="creditBanner && creditBanner.benefits.length">
+              <li v-for="b in creditBanner.benefits" :key="b">{{ b }}</li>
+            </ul>
+            <ul class="hero-info">
+              <li><span>申请人</span>{{ user.name }}</li>
+              <li><span>经营内容</span>{{ user.business || '-' }}</li>
+              <li><span>经营规模</span>{{ user.scale || '-' }}</li>
+              <li><span>所在地</span>{{ user.address || '-' }}</li>
+            </ul>
+            <a class="btn btn-ghost btn-block btn-sm" href="pages/credit.html">查看积分详情</a>
+          </div>
+
+          <!-- 未登录：引导注册登录 -->
+          <div class="hero-card card card-pad" v-else>
+            <div class="hero-card-title">登录后查看专属额度与权益</div>
+            <p class="hero-guest-desc">
+              系统会依据你的信用等级，自动匹配可申请的贷款产品、最高额度、
+              利率优惠与审批时效，等级越高办理越快。
+            </p>
+            <ul class="hero-benefits">
+              <li>农户 / 农业企业双角色注册，建立涉农信用档案</li>
+              <li>信用达标可申请免抵押纯信用贷款</li>
+              <li>贷款申请、审批、放款、结清全程线上可查</li>
+            </ul>
+            <a class="btn btn-primary btn-block btn-sm" href="pages/login.html">登录 / 注册</a>
+          </div>
+        </section>
+
+        <!-- 数据概览 -->
+        <section class="section">
+          <div class="stat-grid">
+            <div class="stat-card" v-for="item in stats" :key="item.label">
+              <div class="stat-icon">{{ item.icon }}</div>
+              <div>
+                <div class="stat-value">{{ item.value }}<span class="stat-unit">{{ item.unit }}</span></div>
+                <div class="stat-label">{{ item.label }}</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 精选产品 -->
+        <section class="section">
+          <div class="section-head">
+            <div>
+              <div class="section-title">热门贷款产品</div>
+              <div class="section-desc mt-8">数据来自后端接口实时同步，共 {{ db.products.length }} 款在售产品</div>
+            </div>
+            <a class="btn btn-text" href="pages/products.html">查看全部产品</a>
+          </div>
+          <div class="product-grid">
+            <article
+              class="product-card"
+              v-for="p in featuredProducts"
+              :key="p.id"
+              :data-product-id="p.id"
+              :data-product-name="p.name"
+            >
+              <div class="product-top">
+                <div class="product-icon" :style="{ background: iconColor(p.id) }">{{ p.iconText }}</div>
+                <div>
+                  <div class="product-name">{{ p.name }}</div>
+                  <div class="product-tags">
+                    <span class="tag">{{ p.type }}</span>
+                    <span class="tag tag-warn" v-if="p.hot">热门</span>
+                  </div>
+                </div>
+              </div>
+              <div class="product-rate">
+                <span class="rate-num">{{ p.rate }}</span><span class="rate-unit">% 年化利率</span>
+              </div>
+              <div class="product-rows">
+                <div><span>额度范围</span>{{ U.amountRange(p.minAmount, p.maxAmount) }}</div>
+                <div><span>参考期限</span>{{ p.termMonths }} 个月</div>
+                <div><span>担保方式</span>{{ p.guarantee }}</div>
+              </div>
+              <a class="btn btn-primary btn-block btn-sm" href="pages/products.html">立即查看</a>
+            </article>
+          </div>
+        </section>
+
+        <!-- 办理流程 -->
+        <section class="section">
+          <div class="section-head">
+            <div class="section-title">办理流程</div>
+          </div>
+          <div class="steps">
+            <div class="step" v-for="(s, i) in steps" :key="i">
+              <div class="step-no">{{ i + 1 }}</div>
+              <div class="step-title">{{ s.title }}</div>
+              <div class="step-desc">{{ s.desc }}</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 最新资讯 -->
+        <section class="section">
+          <div class="section-head">
+            <div class="section-title">惠农资讯</div>
+            <a class="btn btn-text" href="pages/news.html">更多资讯</a>
+          </div>
+          <div class="news-mini">
+            <a class="news-mini-item" v-for="n in latestNews" :key="n.id" :href="'pages/news.html?id=' + n.id">
+              <div class="news-mini-body">
+                <div class="news-mini-title">{{ n.title }}</div>
+                <div class="news-mini-summary">{{ n.summary }}</div>
+              </div>
+              <div class="news-mini-meta">
+                <span class="tag tag-info">{{ n.category }}</span>
+                <span class="text-mute">{{ n.date }}</span>
+              </div>
+            </a>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- 公共页脚 -->
+    <app-footer></app-footer>
+  </div>
+
+  <script src="vendor/vue.global.prod.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/constants.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/components.js"></script>
+  <script src="js/home.js"></script>
+</body>
+</html>

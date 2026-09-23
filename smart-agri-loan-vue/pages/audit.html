@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>贷款审批管理 - 智能惠农信贷系统</title>
+  <link rel="stylesheet" href="../css/common.css" />
+  <link rel="stylesheet" href="../css/pages.css" />
+</head>
+<body>
+  <div id="app" v-cloak>
+    <app-header active="audit-entry"></app-header>
+
+    <main class="page">
+      <div class="container">
+        <section class="page-banner">
+          <h1>金融机构审批管理台</h1>
+          <p>
+            集中处理农户与农业企业提交的贷款申请，支持按状态分栏查看、初审通过与拒绝操作，
+            并在详情中查看申请人信用积分与红黄绿风险等级。
+          </p>
+        </section>
+
+        <!-- 风控看板 -->
+        <section class="section">
+          <div class="stat-grid">
+            <div class="stat-card" v-for="item in board" :key="item.label">
+              <div class="stat-icon" :style="{ background: item.bg, color: item.color }">{{ item.icon }}</div>
+              <div>
+                <div class="stat-value">{{ item.value }}<span class="stat-unit">{{ item.unit }}</span></div>
+                <div class="stat-label">{{ item.label }}</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 状态分栏 -->
+        <div class="news-tabs">
+          <button
+            class="chip chip-lg"
+            v-for="tab in tabs"
+            :key="tab.value"
+            :class="{ active: activeStatus === tab.value }"
+            @click="activeStatus = tab.value"
+          >{{ tab.text }}（{{ tab.count }}）</button>
+        </div>
+
+        <!-- 申请单列表 -->
+        <section class="card table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>申请编号</th>
+                <th>申请人</th>
+                <th>贷款产品</th>
+                <th>申请金额</th>
+                <th>期限</th>
+                <th>信用 / 风险</th>
+                <th>状态</th>
+                <th>申请时间</th>
+                <th style="width: 190px">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in filteredList" :key="item.id">
+                <td class="nowrap">{{ item.id }}</td>
+                <td class="nowrap">{{ item.applicantName }}</td>
+                <td>{{ item.productName }}</td>
+                <td class="nowrap">{{ U.thousand(item.amount) }} 元</td>
+                <td class="nowrap">{{ item.term }} 个月</td>
+                <td class="nowrap">
+                  {{ scoreOf(item) }}
+                  <span class="risk-dot" :class="'risk-' + riskOf(item).color"></span>
+                  {{ riskOf(item).label }}
+                </td>
+                <td><span :class="U.statusTagClass(item.status)">{{ item.status }}</span></td>
+                <td class="nowrap">{{ item.applyTime }}</td>
+                <td class="nowrap">
+                  <button class="btn btn-text" @click="openDetail(item)">详情</button>
+                  <button
+                    class="btn btn-text"
+                    v-if="item.status === STATUS.PENDING_FIRST"
+                    @click="openAction(item, 'pass')"
+                  >通过</button>
+                  <button
+                    class="btn btn-text"
+                    v-if="item.status === STATUS.PENDING_FIRST"
+                    @click="openAction(item, 'reject')"
+                  >拒绝</button>
+                  <span class="text-mute" v-if="item.status !== STATUS.PENDING_FIRST">已处理</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="empty" v-if="!filteredList.length">
+            <div class="empty-icon">无</div>
+            该状态下暂无申请单
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- 申请详情弹窗（含风控看板） -->
+    <div class="modal-mask" v-if="detailVisible" @click.self="detailVisible = false">
+      <div class="modal modal-lg">
+        <div class="modal-head">
+          <div>
+            <div class="modal-title">{{ detail.productName }} - {{ detail.applicantName }}</div>
+            <div class="modal-meta">
+              申请编号 {{ detail.id }} ｜ 提交时间 {{ detail.applyTime }} ｜
+              <span :class="U.statusTagClass(detail.status)">{{ detail.status }}</span>
+            </div>
+          </div>
+          <button class="modal-close" @click="detailVisible = false">×</button>
+        </div>
+        <div class="modal-body">
+          <!-- 风控看板 -->
+          <div class="risk-panel" :class="'risk-' + riskOf(detail).color">
+            <div class="risk-score">
+              <div class="risk-score-num">{{ scoreOf(detail) }}</div>
+              <div class="risk-score-label">当前信用积分</div>
+            </div>
+            <div class="risk-meta">
+              <div class="risk-row">
+                <span>风险等级</span>
+                <span class="risk-badge" :class="'risk-' + riskOf(detail).color">{{ riskOf(detail).label }}</span>
+                <span class="risk-row-extra">信用等级 {{ U.levelOf(scoreOf(detail)) }}</span>
+              </div>
+              <div class="risk-row">
+                <span>建议授信额度</span>
+                <b>{{ U.toWan(suggestAmount(detail)) }}</b>
+                <span class="risk-row-extra">本次申请 {{ U.toWan(detail.amount) }}</span>
+              </div>
+              <div class="risk-alert" v-if="riskOf(detail).key === 'HIGH'">
+                信用积分偏低（低于 650 分），存在较高违约风险，建议补充担保或降低授信额度后再审批。
+              </div>
+              <div class="risk-alert risk-alert-warn" v-else-if="riskOf(detail).key === 'MID'">
+                信用积分中等（650~749 分），建议核实经营流水与还款来源后审慎审批。
+              </div>
+              <div class="risk-alert risk-alert-ok" v-else>
+                信用良好（750 分及以上），可走绿色审批通道，建议优先处理。
+              </div>
+            </div>
+          </div>
+
+          <div class="detail-block">
+            <div class="detail-block-title">申请信息</div>
+            <div class="detail-grid">
+              <div><span>贷款产品</span>{{ detail.productName }}</div>
+              <div><span>申请金额</span>{{ U.thousand(detail.amount) }} 元</div>
+              <div><span>申请期限</span>{{ detail.term }} 个月</div>
+              <div><span>贷款用途</span>{{ detail.purpose }}</div>
+              <div><span>还款来源</span>{{ detail.repaySource || '-' }}</div>
+              <div><span>联系电话</span>{{ detail.phone }}</div>
+              <div><span>家庭住址</span>{{ detail.address || '-' }}</div>
+              <div><span>经营类型</span>{{ detail.business || '-' }}</div>
+              <div><span>经营规模</span>{{ detail.scale || '-' }}</div>
+              <div><span>身份证号</span>{{ detail.idCard || '-' }}</div>
+            </div>
+          </div>
+
+          <div class="detail-block" v-if="detail.auditOpinion">
+            <div class="detail-block-title">审批意见</div>
+            <div class="audit-opinion">
+              {{ detail.auditOpinion }}
+              <span class="text-mute">（{{ detail.auditor }} {{ detail.auditTime }}）</span>
+            </div>
+          </div>
+
+          <div class="detail-block">
+            <div class="detail-block-title">流转记录</div>
+            <ul class="log-list">
+              <li v-for="(log, i) in detail.logs" :key="i">
+                <span class="log-time">{{ log.time }}</span>
+                <span class="log-action">{{ log.action }}</span>
+                <span class="log-note">{{ log.note }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn btn-outline" @click="detailVisible = false">关闭</button>
+          <template v-if="detail.status === STATUS.PENDING_FIRST">
+            <button class="btn btn-danger" @click="openAction(detail, 'reject')">拒绝</button>
+            <button class="btn btn-primary" @click="openAction(detail, 'pass')">初审通过</button>
+          </template>
+        </div>
+      </div>
+    </div>
+
+    <!-- 审批操作弹窗 -->
+    <div class="modal-mask" v-if="actionVisible" @click.self="actionVisible = false">
+      <div class="modal">
+        <div class="modal-head">
+          <div>
+            <div class="modal-title">{{ actionType === 'pass' ? '初审通过' : '拒绝申请' }}</div>
+            <div class="modal-meta">申请编号 {{ current.id }} ｜ {{ current.applicantName }}</div>
+          </div>
+          <button class="modal-close" @click="actionVisible = false">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-row">
+            <label class="form-label">快捷意见</label>
+            <div class="filter-options">
+              <button class="chip" v-for="q in quickOpinions" :key="q" @click="opinion = q">{{ q }}</button>
+            </div>
+          </div>
+          <div class="form-row">
+            <label class="form-label"><i class="req">*</i>审批意见</label>
+            <div class="form-control">
+              <textarea class="textarea" v-model.trim="opinion" placeholder="请填写审批意见"></textarea>
+              <div class="form-error" v-if="opinionError">{{ opinionError }}</div>
+            </div>
+          </div>
+          <div class="audit-summary">
+            确认后该申请状态将变更为
+            <b class="text-primary">{{ actionType === 'pass' ? STATUS.FIRST_PASS : STATUS.REJECTED }}</b>
+            ，并记录审批时间与审批人。
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn btn-outline" @click="actionVisible = false">取消</button>
+          <button class="btn" :class="actionType === 'pass' ? 'btn-primary' : 'btn-danger'" @click="confirmAction">
+            确认{{ actionType === 'pass' ? '通过' : '拒绝' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <app-footer></app-footer>
+  </div>
+
+  <script src="../vendor/vue.global.prod.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/constants.js"></script>
+  <script src="../js/db.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/components.js"></script>
+  <script src="../js/audit.js"></script>
+</body>
+</html>

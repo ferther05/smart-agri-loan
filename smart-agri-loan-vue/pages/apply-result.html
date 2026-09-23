@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>申请提交成功 - 智能惠农信贷系统</title>
+  <link rel="stylesheet" href="../css/common.css" />
+  <link rel="stylesheet" href="../css/pages.css" />
+</head>
+<body>
+  <div id="app" v-cloak>
+    <app-header active="apply"></app-header>
+
+    <main class="page">
+      <div class="container">
+        <section class="result-card card card-pad" v-if="application">
+          <div class="result-icon">√</div>
+          <h2 class="result-title">贷款申请提交成功</h2>
+          <p class="result-desc">
+            您的申请已进入金融机构初审队列，预计 1~2 个工作日内出结果，请保持手机畅通。
+          </p>
+
+          <div class="result-id">
+            <span>申请编号</span>
+            <b>{{ application.id }}</b>
+            <button class="btn btn-ghost btn-sm" @click="copyId">复制编号</button>
+          </div>
+
+          <div class="result-grid">
+            <div><span>贷款产品</span><b>{{ application.productName }}</b></div>
+            <div><span>申请金额</span><b class="text-primary">{{ U.thousand(application.amount) }} 元</b></div>
+            <div><span>申请期限</span><b>{{ application.term }} 个月</b></div>
+            <div><span>提交时间</span><b>{{ application.applyTime }}</b></div>
+            <div><span>当前状态</span><b><span :class="U.statusTagClass(application.status)">{{ application.status }}</span></b></div>
+            <div><span>贷款用途</span><b>{{ application.purpose }}</b></div>
+          </div>
+
+          <div class="progress-flow">
+            <div
+              class="flow-item"
+              v-for="(s, i) in flowList"
+              :key="s"
+              :class="{ done: i < currentStep, current: i === currentStep }"
+            >
+              <div class="flow-dot">{{ i < currentStep ? '√' : i + 1 }}</div>
+              <div class="flow-text">{{ s }}</div>
+            </div>
+          </div>
+
+          <div class="result-actions">
+            <a class="btn btn-primary" :href="'my-apply.html?id=' + application.id">查看办理进度</a>
+            <a class="btn btn-outline" href="apply.html">再申请一笔</a>
+            <a class="btn btn-text" href="../index.html">返回首页</a>
+          </div>
+        </section>
+
+        <section class="card card-pad empty" v-else>
+          <div class="empty-icon">无</div>
+          未找到对应的申请单，可能数据已被清空
+          <div class="mt-16"><a class="btn btn-primary btn-sm" href="apply.html">重新申请</a></div>
+        </section>
+      </div>
+    </main>
+
+    <app-footer></app-footer>
+  </div>
+
+  <script src="../vendor/vue.global.prod.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/constants.js"></script>
+  <script src="../js/db.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/components.js"></script>
+  <script src="../js/apply-result.js"></script>
+</body>
+</html>

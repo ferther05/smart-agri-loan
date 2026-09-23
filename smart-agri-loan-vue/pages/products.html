@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>贷款产品 - 智能惠农信贷系统</title>
+  <link rel="stylesheet" href="../css/common.css" />
+  <link rel="stylesheet" href="../css/pages.css" />
+</head>
+<body>
+  <div id="app" v-cloak>
+    <app-header active="products"></app-header>
+
+    <main class="page">
+      <div class="container">
+        <section class="page-banner">
+          <h1>惠农贷款产品大全</h1>
+          <p>
+            覆盖种植、养殖、农机购置、冷链仓储、产业发展等场景，利率低至 3.55%，
+            纯信用、可抵押、政策贴息多种方式灵活选择。
+          </p>
+        </section>
+
+        <!-- 筛选栏 -->
+        <section class="filter-bar card card-pad">
+          <div class="filter-group">
+            <span class="filter-label">产品类型</span>
+            <div class="filter-options">
+              <button
+                class="chip"
+                v-for="t in typeOptions"
+                :key="t"
+                :class="{ active: activeType === t }"
+                @click="activeType = t"
+              >{{ t }}</button>
+            </div>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">贷款期限</span>
+            <div class="filter-options">
+              <button
+                class="chip"
+                v-for="t in termOptions"
+                :key="t.value"
+                :class="{ active: activeTerm === t.value }"
+                @click="activeTerm = t.value"
+              >{{ t.text }}</button>
+            </div>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">排序方式</span>
+            <div class="filter-options">
+              <button
+                class="chip"
+                v-for="s in sortOptions"
+                :key="s.value"
+                :class="{ active: sortKey === s.value }"
+                @click="sortKey = s.value"
+              >{{ s.text }}</button>
+            </div>
+          </div>
+          <div class="filter-result">
+            共筛选出 <b class="text-primary">{{ filteredProducts.length }}</b> 款产品
+            <button class="btn btn-text" @click="resetFilter">重置条件</button>
+          </div>
+        </section>
+
+        <!-- 产品卡片：通过 data-product-id 记录产品编号，供申请表单取数 -->
+        <section class="product-grid product-grid-lg" @click="onGridClick">
+          <article
+            class="product-card"
+            v-for="p in filteredProducts"
+            :key="p.id"
+            :data-product-id="p.id"
+            :data-product-name="p.name"
+          >
+            <div class="product-top">
+              <div class="product-icon" :style="{ background: iconColor(p.id) }">{{ p.iconText }}</div>
+              <div>
+                <div class="product-name">{{ p.name }}</div>
+                <div class="product-tags">
+                  <span class="tag">{{ p.type }}</span>
+                  <span class="tag tag-warn" v-if="p.hot">热门</span>
+                  <span class="tag tag-info">{{ p.badge }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="product-rate">
+              <span class="rate-num">{{ p.rate }}</span><span class="rate-unit">% 年化利率</span>
+            </div>
+
+            <div class="product-rows">
+              <div><span>额度范围</span>{{ U.amountRange(p.minAmount, p.maxAmount) }}</div>
+              <div><span>可选期限</span>{{ p.terms.join(' / ') }} 个月</div>
+              <div><span>还款方式</span>{{ p.repayment }}</div>
+              <div><span>担保方式</span>{{ p.guarantee }}</div>
+            </div>
+
+            <ul class="product-features">
+              <li v-for="(f, i) in p.features" :key="i">{{ f }}</li>
+            </ul>
+
+            <!-- 信用等级自适应提示：后端按当前用户等级下发 -->
+            <div class="product-credit-tip" :class="{ 'is-blocked': p.canApply === false }" v-if="p.applyTip">
+              {{ p.applyTip }}
+            </div>
+
+            <div class="product-foot">
+              <span class="text-mute">{{ U.thousand(p.applyCount) }} 人已申请</span>
+              <div class="product-btns">
+                <button class="btn btn-ghost btn-sm" data-action="detail">详情</button>
+                <button class="btn btn-primary btn-sm" data-action="apply"
+                        :class="{ 'is-disabled': p.canApply === false }">
+                  {{ p.canApply === false ? '暂不可申请' : '立即申请' }}
+                </button>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <div class="empty" v-if="!filteredProducts.length">
+          <div class="empty-icon">无</div>
+          暂无符合条件的产品，请调整筛选条件
+        </div>
+      </div>
+    </main>
+
+    <!-- 产品详情弹窗 -->
+    <div class="modal-mask" v-if="detailVisible" @click.self="detailVisible = false">
+      <div class="modal">
+        <div class="modal-head">
+          <div>
+            <div class="modal-title">{{ detail.name }}</div>
+            <div class="modal-meta">
+              产品编号 {{ detail.id }} ｜ {{ detail.type }} ｜ 参考年化利率 {{ detail.rate }}%
+            </div>
+          </div>
+          <button class="modal-close" @click="detailVisible = false">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="detail-grid">
+            <div><span>额度范围</span>{{ U.amountRange(detail.minAmount, detail.maxAmount) }}</div>
+            <div><span>可选期限</span>{{ detail.terms.join(' / ') }} 个月</div>
+            <div><span>参考期限</span>{{ detail.termMonths }} 个月</div>
+            <div><span>还款方式</span>{{ detail.repayment }}</div>
+            <div><span>担保方式</span>{{ detail.guarantee }}</div>
+            <div><span>适用对象</span>{{ detail.target }}</div>
+          </div>
+          <div class="detail-block">
+            <div class="detail-block-title">产品特色</div>
+            <ul class="product-features">
+              <li v-for="(f, i) in detail.features" :key="i">{{ f }}</li>
+            </ul>
+          </div>
+          <div class="detail-block" v-if="detail.applyTip">
+            <div class="detail-block-title">准入提示</div>
+            <p style="text-indent: 0" :class="{ 'text-danger': detail.canApply === false }">
+              {{ detail.applyTip }}
+            </p>
+          </div>
+          <div class="detail-block">
+            <div class="detail-block-title">温馨提示</div>
+            <p style="text-indent: 0">
+              以上利率与额度为参考值，最终以审批结果为准。贷款资金仅可用于农业生产经营活动，
+              平台不会在放款前收取任何费用，请警惕电信诈骗。
+            </p>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn btn-outline" @click="detailVisible = false">关闭</button>
+          <button class="btn btn-primary" :class="{ 'is-disabled': detail.canApply === false }"
+                  @click="onApply(detail.id)">
+            {{ detail.canApply === false ? '当前等级暂不可申请' : '申请该产品' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <app-footer></app-footer>
+  </div>
+
+  <script src="../vendor/vue.global.prod.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/constants.js"></script>
+  <script src="../js/db.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/components.js"></script>
+  <script src="../js/products.js"></script>
+</body>
+</html>

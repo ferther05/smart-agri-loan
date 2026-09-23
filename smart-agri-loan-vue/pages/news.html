@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>惠农资讯 - 智能惠农信贷系统</title>
+  <link rel="stylesheet" href="../css/common.css" />
+  <link rel="stylesheet" href="../css/pages.css" />
+</head>
+<body>
+  <div id="app" v-cloak>
+    <app-header active="news"></app-header>
+
+    <main class="page">
+      <div class="container">
+        <section class="page-banner">
+          <h1>惠农资讯</h1>
+          <p>
+            第一时间传递强农惠农政策、金融知识与行业动态，帮助农户和农业经营主体
+            懂政策、会贷款、防风险。
+          </p>
+        </section>
+
+        <!-- 分类切换 -->
+        <div class="news-tabs">
+          <button
+            class="chip chip-lg"
+            v-for="c in categories"
+            :key="c"
+            :class="{ active: activeCategory === c }"
+            @click="activeCategory = c"
+          >{{ c }}</button>
+        </div>
+
+        <!-- 资讯列表（纯静态渲染，点击标题弹窗看详情） -->
+        <section class="news-list">
+          <article class="news-item card" v-for="n in filteredNews" :key="n.id">
+            <div class="news-item-main">
+              <div class="news-item-head">
+                <span class="tag" :class="categoryClass(n.category)">{{ n.category }}</span>
+                <h3 class="news-item-title" :data-news-id="n.id" @click="openDetail(n.id)">{{ n.title }}</h3>
+              </div>
+              <p class="news-item-summary">{{ n.summary }}</p>
+              <div class="news-item-meta">
+                <span>{{ n.source }}</span>
+                <span>{{ n.date }}</span>
+                <span>{{ U.thousand(n.views) }} 次阅读</span>
+              </div>
+            </div>
+            <button class="btn btn-text" :data-news-id="n.id" @click="openDetail(n.id)">阅读全文</button>
+          </article>
+        </section>
+
+        <div class="empty" v-if="!filteredNews.length">
+          <div class="empty-icon">无</div>
+          该分类下暂无资讯，请切换分类查看
+        </div>
+      </div>
+    </main>
+
+    <!-- 资讯详情弹窗（大屏阅读窗：宽幅 + 舒适字号） -->
+    <div class="modal-mask" v-if="detailVisible" @click.self="detailVisible = false">
+      <div class="modal modal-lg modal-news">
+        <div class="modal-head">
+          <div>
+            <div class="modal-title">{{ detail.title }}</div>
+            <div class="modal-meta">
+              {{ detail.source }} ｜ {{ detail.date }} ｜ {{ U.thousand(detail.views) }} 次阅读
+            </div>
+          </div>
+          <button class="modal-close" @click="detailVisible = false">×</button>
+        </div>
+        <div class="modal-body">
+          <p class="news-lead">{{ detail.summary }}</p>
+          <div class="news-article">
+            <p v-for="(para, i) in detail.content" :key="i">{{ para }}</p>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn btn-outline" @click="detailVisible = false">关闭</button>
+          <button class="btn btn-primary" @click="onGoProducts">去看看贷款产品</button>
+        </div>
+      </div>
+    </div>
+
+    <app-footer></app-footer>
+  </div>
+
+  <script src="../vendor/vue.global.prod.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/constants.js"></script>
+  <script src="../js/db.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/components.js"></script>
+  <script src="../js/news.js"></script>
+</body>
+</html>

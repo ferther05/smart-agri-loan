@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>信用积分 - 智能惠农信贷系统</title>
+  <link rel="stylesheet" href="../css/common.css" />
+  <link rel="stylesheet" href="../css/pages.css" />
+</head>
+<body>
+  <div id="app" v-cloak>
+    <app-header active="credit"></app-header>
+
+    <main class="page">
+      <div class="container">
+        <section class="page-banner">
+          <h1>我的信用积分</h1>
+          <p>
+            信用积分由履约能力、经营稳定性、资产状况、信用记录与政策匹配五个维度综合评定，
+            积分越高，可获得的授信额度越高、利率越优惠。
+          </p>
+        </section>
+
+        <section class="credit-top">
+          <!-- 仪表盘 -->
+          <div class="card card-pad credit-gauge-card">
+            <div class="card-title">信用评分</div>
+            <svg class="gauge" viewBox="0 0 240 150">
+              <path class="gauge-bg" d="M30 120 A 90 90 0 0 1 210 120" />
+              <path
+                class="gauge-fg"
+                d="M30 120 A 90 90 0 0 1 210 120"
+                :stroke-dasharray="dashArray"
+                :stroke-dashoffset="dashOffset"
+              />
+              <text x="120" y="104" class="gauge-score">{{ creditScore }}</text>
+              <text x="120" y="126" class="gauge-tip">当前信用积分</text>
+              <text x="30" y="140" class="gauge-scale">350</text>
+              <text x="210" y="140" class="gauge-scale" text-anchor="end">950</text>
+            </svg>
+            <div class="gauge-foot">
+              <div class="gauge-level">
+                信用等级 <span class="tag tag-primary">{{ creditLevel }}</span>
+              </div>
+              <div class="gauge-level">
+                信用评价 <span class="text-primary text-bold">{{ creditComment }}</span>
+              </div>
+            </div>
+
+            <!-- 查看积分用途与阈值详情：点击弹出详情弹窗 -->
+            <button type="button" class="credit-rules-btn" @click="rulesVisible = true">
+              查看信用积分用途和阈值详情
+            </button>
+          </div>
+
+          <!-- 雷达图 -->
+          <div class="card card-pad credit-radar-card">
+            <div class="card-title">五维信用画像</div>
+            <svg class="radar" viewBox="0 0 300 250">
+              <polygon
+                v-for="(ring, idx) in radarRings"
+                :key="'ring' + idx"
+                class="radar-ring"
+                :points="ring"
+              />
+              <line
+                v-for="(axis, idx) in radarAxes"
+                :key="'axis' + idx"
+                class="radar-axis"
+                :x1="axis.x1"
+                :y1="axis.y1"
+                :x2="axis.x2"
+                :y2="axis.y2"
+              />
+              <polygon class="radar-area" :points="radarPoints" />
+              <circle
+                v-for="(p, idx) in radarDots"
+                :key="'dot' + idx"
+                class="radar-dot"
+                :cx="p.x"
+                :cy="p.y"
+                r="3.5"
+              />
+              <text
+                v-for="(axis, idx) in radarAxes"
+                :key="'label' + idx"
+                class="radar-label"
+                :x="axis.lx"
+                :y="axis.ly"
+                :text-anchor="axis.anchor"
+              >{{ axis.label }}</text>
+            </svg>
+            <div class="radar-values">
+              <div class="radar-value" v-for="d in dimensions" :key="d.key">
+                <span>{{ d.label }}</span>
+                <b>{{ d.value }}</b>
+              </div>
+            </div>
+          </div>
+
+          <!-- 信用权益（后端按等级差异化下发） -->
+          <div class="card card-pad credit-rights-card">
+            <div class="card-title">我的信用权益</div>
+            <ul class="rights-list">
+              <li v-for="(r, i) in rights" :key="i">
+                <div class="rights-title">{{ r }}</div>
+              </li>
+            </ul>
+            <div class="rights-tip">
+              提示：以上权益由后端依据当前信用等级（{{ creditLevel }}）实时下发，
+              贷款结清后积分 +5，等级提升后权益自动升级。
+            </div>
+          </div>
+        </section>
+
+        <!-- 授信政策（自适应界面核心：等级不同 → 额度 / 利率 / 时效不同） -->
+        <section class="section" v-if="policy && policy.level">
+          <div class="section-head">
+            <div>
+              <div class="section-title">我的授信政策</div>
+              <div class="section-desc mt-8">依据当前信用等级自动匹配，无需人工申请</div>
+            </div>
+          </div>
+          <div class="policy-banner" :class="'policy-' + policy.level">
+            <div class="policy-notice">{{ policy.notice }}</div>
+            <div class="policy-suggestion">提分建议：{{ policy.suggestion }}</div>
+          </div>
+          <div class="policy-grid">
+            <div class="card card-pad policy-card">
+              <div class="policy-label">最高纯信用额度</div>
+              <div class="policy-value">{{ maxCreditText }}</div>
+            </div>
+            <div class="card card-pad policy-card">
+              <div class="policy-label">利率优惠</div>
+              <div class="policy-value">
+                {{ policy.rateDiscountBp ? '下浮 ' + policy.rateDiscountBp + ' BP' : '暂无下浮' }}
+              </div>
+            </div>
+            <div class="card card-pad policy-card">
+              <div class="policy-label">审批通道</div>
+              <div class="policy-value">{{ policy.fastTrack ? '极速审批' : '常规审批' }}</div>
+              <div class="policy-sub">{{ policy.approvalDesc }}</div>
+            </div>
+            <div class="card card-pad policy-card">
+              <div class="policy-label">增信要求</div>
+              <div class="policy-value">{{ policy.requiresGuarantee ? '需补充担保' : '免担保' }}</div>
+              <div class="policy-sub">{{ levelTip }}</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 积分变动日志 -->
+        <section class="section">
+          <div class="section-head">
+            <div>
+              <div class="section-title">积分变动日志</div>
+              <div class="section-desc mt-8">记录每一次影响信用积分的行为，贷款结清后自动追加记录</div>
+            </div>
+          </div>
+          <div class="card">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th style="width: 120px">变动日期</th>
+                  <th>事件说明</th>
+                  <th style="width: 110px">变动分值</th>
+                  <th style="width: 110px">变动后积分</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="log in logsDesc" :key="log.id">
+                  <td>{{ log.date }}</td>
+                  <td>{{ log.event }}</td>
+                  <td :class="log.delta >= 0 ? 'text-primary' : 'text-danger'">
+                    {{ log.delta >= 0 ? '+' : '' }}{{ log.delta }}
+                  </td>
+                  <td class="text-bold">{{ log.score }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 提分建议 -->
+        <section class="section">
+          <div class="section-head">
+            <div class="section-title">积分提升建议</div>
+          </div>
+          <div class="tips-grid">
+            <!-- 后端按当前等级下发的专属提分建议 -->
+            <div class="card card-pad tip-card tip-card-highlight" v-if="policy && policy.suggestion">
+              <div class="tip-no">荐</div>
+              <div class="tip-title">专属提分建议</div>
+              <div class="tip-desc">{{ policy.suggestion }}</div>
+              <div class="tip-score">{{ levelTip }}</div>
+            </div>
+            <div class="card card-pad tip-card" v-for="t in tips" :key="t.title">
+              <div class="tip-no">{{ t.no }}</div>
+              <div class="tip-title">{{ t.title }}</div>
+              <div class="tip-desc">{{ t.desc }}</div>
+              <div class="tip-score">预计 +{{ t.score }} 分</div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <app-footer></app-footer>
+
+    <!-- 积分用途与阈值详情弹窗 -->
+    <div class="modal-mask" v-if="rulesVisible" @click.self="rulesVisible = false">
+      <div class="modal credit-rules-modal">
+        <div class="modal-head">
+          <div>
+            <div class="modal-title">信用积分用途与阈值详情</div>
+            <div class="modal-meta">积分越高，可获得的授信额度越高、利率越优惠</div>
+          </div>
+          <button class="modal-close" @click="rulesVisible = false">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="credit-rules-block">
+            <div class="credit-rules-sub">积分用途</div>
+            <ul class="credit-uses">
+              <li v-for="u in uses" :key="u.t">
+                <b>{{ u.t }}</b>
+                <span>{{ u.d }}</span>
+              </li>
+            </ul>
+          </div>
+          <div class="credit-rules-block">
+            <div class="credit-rules-sub">积分阈值与信用等级</div>
+            <table class="credit-level-table">
+              <thead>
+                <tr>
+                  <th>等级</th>
+                  <th>积分区间</th>
+                  <th>权益解读</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="lv in levels" :key="lv.level">
+                  <td>
+                    <span class="level-badge" :class="'level-' + lv.level">{{ lv.level }}</span>
+                  </td>
+                  <td class="nowrap">{{ lv.min }} ~ {{ lv.max }}</td>
+                  <td>{{ lv.desc }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn btn-outline" @click="rulesVisible = false">关闭</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../vendor/vue.global.prod.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/constants.js"></script>
+  <script src="../js/db.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/components.js"></script>
+  <script src="../js/credit.js"></script>
+</body>
+</html>

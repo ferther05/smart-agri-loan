@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>操作日志 - 智能惠农信贷系统</title>
+  <link rel="stylesheet" href="../css/common.css" />
+  <link rel="stylesheet" href="../css/pages.css" />
+</head>
+<body>
+  <div id="app" v-cloak>
+    <app-header active="op-logs"></app-header>
+
+    <main class="page">
+      <div class="container">
+        <section class="page-banner">
+          <h1>操作日志管理</h1>
+          <p>
+            系统通过 Spring AOP 自动记录每一位用户的业务操作（登录、申请、审批、签约、放款、结清、调分等），
+            包含操作人、角色、模块、目标对象、来源 IP、耗时与执行结果，成功与失败都会留痕。
+          </p>
+        </section>
+
+        <!-- 筛选 -->
+        <section class="card card-pad">
+          <div class="log-filter">
+            <div class="filter-item">
+              <label class="form-label">关键字</label>
+              <input class="input" v-model.trim="filters.keyword" placeholder="账号 / 动作 / 目标 / IP" @keyup.enter="search" />
+            </div>
+            <div class="filter-item">
+              <label class="form-label">业务模块</label>
+              <select class="input" v-model="filters.module">
+                <option value="">全部模块</option>
+                <option v-for="m in modules" :key="m" :value="m">{{ m }}</option>
+              </select>
+            </div>
+            <div class="filter-item">
+              <label class="form-label">执行结果</label>
+              <select class="input" v-model="filters.success">
+                <option value="">全部结果</option>
+                <option value="true">成功</option>
+                <option value="false">失败</option>
+              </select>
+            </div>
+            <div class="filter-actions">
+              <button class="btn btn-primary btn-sm" @click="search">查询</button>
+              <button class="btn btn-outline btn-sm" @click="reset">重置</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- 日志列表 -->
+        <section class="section">
+          <div class="section-head">
+            <div>
+              <div class="section-title">操作记录</div>
+              <div class="section-desc mt-8">共 {{ total }} 条，按操作时间倒序</div>
+            </div>
+          </div>
+          <div class="card">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th style="width: 160px">操作时间</th>
+                  <th style="width: 110px">操作人</th>
+                  <th style="width: 100px">角色</th>
+                  <th style="width: 100px">模块</th>
+                  <th>操作内容</th>
+                  <th style="width: 150px">目标对象</th>
+                  <th style="width: 90px">结果</th>
+                  <th style="width: 90px">耗时</th>
+                  <th style="width: 130px">来源 IP</th>
+                  <th style="width: 70px">详情</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template v-for="log in list" :key="log.id">
+                  <tr>
+                    <td class="nowrap">{{ log.operateTime }}</td>
+                    <td>{{ log.username }}</td>
+                    <td>{{ roleLabel(log.role) }}</td>
+                    <td><span class="tag tag-info">{{ log.module }}</span></td>
+                    <td>{{ log.action }}</td>
+                    <td>{{ log.target || '-' }}</td>
+                    <td>
+                      <span class="tag" :class="log.success ? 'tag-success' : 'tag-danger'">
+                        {{ log.success ? '成功' : '失败' }}
+                      </span>
+                    </td>
+                    <td>{{ log.costMs }} ms</td>
+                    <td class="nowrap">{{ log.ip || '-' }}</td>
+                    <td>
+                      <a href="javascript:void(0)" class="link" @click="toggle(log.id)">
+                        {{ expanded === log.id ? '收起' : '展开' }}
+                      </a>
+                    </td>
+                  </tr>
+                  <tr v-if="expanded === log.id">
+                    <td colspan="10" class="log-detail">
+                      <div class="log-detail-row"><b>方法：</b><span>{{ log.method }}</span></div>
+                      <div class="log-detail-row"><b>入参：</b><code>{{ log.params || '-' }}</code></div>
+                      <div class="log-detail-row" v-if="!log.success">
+                        <b>异常：</b><span class="text-danger">{{ log.errorMsg || '-' }}</span>
+                      </div>
+                    </td>
+                  </tr>
+                </template>
+                <tr v-if="!loading && !list.length">
+                  <td colspan="10" class="text-center text-mute">暂无日志记录</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- 分页 -->
+          <div class="pager" v-if="totalPages > 1">
+            <button class="btn btn-outline btn-sm" :disabled="page <= 1" @click="go(page - 1)">上一页</button>
+            <span class="pager-info">第 {{ page }} / {{ totalPages }} 页</span>
+            <button class="btn btn-outline btn-sm" :disabled="page >= totalPages" @click="go(page + 1)">下一页</button>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <app-footer></app-footer>
+  </div>
+
+  <script src="../vendor/vue.global.prod.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/constants.js"></script>
+  <script src="../js/db.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/components.js"></script>
+  <script src="../js/op-logs.js"></script>
+</body>
+</html>

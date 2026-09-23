@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>登录 / 注册 - 智能惠农信贷系统</title>
+  <link rel="stylesheet" href="../css/common.css" />
+  <link rel="stylesheet" href="../css/pages.css" />
+  <link rel="stylesheet" href="../css/auth.css" />
+</head>
+<body class="auth-body">
+  <div id="app" v-cloak>
+    <div class="auth-wrap">
+      <!-- 左侧品牌区 -->
+      <aside class="auth-brand">
+        <a class="brand brand-light" href="../index.html">
+          <span class="brand-logo">惠</span>
+          <span>智能惠农信贷<span class="brand-sub">Smart Agri-Loan</span></span>
+        </a>
+        <h1 class="auth-brand-title">让每一份耕耘<br />都能获得金融支持</h1>
+        <p class="auth-brand-desc">
+          农户、农业企业与金融机构一站式协同：信用画像定级、贷款在线申请、
+          智能审批、资金到账全程可追溯。
+        </p>
+        <ul class="auth-brand-points">
+          <li>多角色登录：农户 / 农业企业 / 审批人员</li>
+          <li>信用等级自适应：等级不同，额度与权益不同</li>
+          <li>全流程留痕：每一次操作都写入 AOP 操作日志</li>
+        </ul>
+      </aside>
+
+      <!-- 右侧表单区 -->
+      <section class="auth-panel">
+        <div class="auth-card">
+          <div class="auth-tabs">
+            <button type="button" class="auth-tab" :class="{ active: mode === 'login' }"
+                    @click="mode = 'login'">账号登录</button>
+            <button type="button" class="auth-tab" :class="{ active: mode === 'register' }"
+                    @click="mode = 'register'">注册账号</button>
+          </div>
+
+          <!-- 登录 -->
+          <form v-if="mode === 'login'" class="auth-form" @submit.prevent="submitLogin">
+            <div class="form-item">
+              <label class="form-label">登录账号</label>
+              <input class="input" v-model.trim="loginForm.username" placeholder="请输入登录账号" autocomplete="username" />
+            </div>
+            <div class="form-item">
+              <label class="form-label">登录密码</label>
+              <input class="input" type="password" v-model.trim="loginForm.password"
+                     placeholder="请输入登录密码" autocomplete="current-password" />
+            </div>
+            <div class="form-error" v-if="error">{{ error }}</div>
+            <button class="btn btn-primary btn-block" type="submit" :disabled="loading">
+              {{ loading ? '登录中...' : '登录' }}
+            </button>
+
+            <div class="auth-demo">
+              <div class="auth-demo-title">演示账号（密码均为 123456）</div>
+              <div class="auth-demo-list">
+                <button type="button" class="auth-demo-item" @click="quickFill('farmer')">
+                  <b>农户</b><span>farmer · 张大山（AA 级 762 分）</span>
+                </button>
+                <button type="button" class="auth-demo-item" @click="quickFill('coop')">
+                  <b>农业企业</b><span>coop · 雲雾茶业合作社（AAA 级 805 分）</span>
+                </button>
+                <button type="button" class="auth-demo-item" @click="quickFill('auditor')">
+                  <b>审批人员</b><span>auditor · 风控审批员（审批端 / 操作日志）</span>
+                </button>
+              </div>
+            </div>
+          </form>
+
+          <!-- 注册 -->
+          <form v-else class="auth-form" @submit.prevent="submitRegister">
+            <div class="form-row">
+              <div class="form-item">
+                <label class="form-label">登录账号</label>
+                <input class="input" v-model.trim="registerForm.username" placeholder="4-20 位字母 / 数字 / 下划线" />
+              </div>
+              <div class="form-item">
+                <label class="form-label">登录密码</label>
+                <input class="input" type="password" v-model.trim="registerForm.password" placeholder="6-30 位" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-item">
+                <label class="form-label">注册身份</label>
+                <select class="input" v-model="registerForm.role">
+                  <option value="FARMER">农户</option>
+                  <option value="ENTERPRISE">农业企业</option>
+                </select>
+              </div>
+              <div class="form-item">
+                <label class="form-label">姓名 / 主体名称</label>
+                <input class="input" v-model.trim="registerForm.name" placeholder="如：张大山 / XX 合作社" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-item">
+                <label class="form-label">手机号</label>
+                <input class="input" v-model.trim="registerForm.phone" placeholder="11 位手机号" />
+              </div>
+              <div class="form-item">
+                <label class="form-label">经营规模</label>
+                <input class="input" v-model.trim="registerForm.scale" placeholder="如：32 亩 / 社员 126 户" />
+              </div>
+            </div>
+            <div class="form-item">
+              <label class="form-label">经营内容</label>
+              <input class="input" v-model.trim="registerForm.business" placeholder="如：茶叶种植与初加工" />
+            </div>
+            <div class="form-item">
+              <label class="form-label">联系地址</label>
+              <input class="input" v-model.trim="registerForm.address" placeholder="如：贵州省遵义市湄潭县永兴镇" />
+            </div>
+            <div class="form-tip">
+              注册后系统将为你建立涉农信用档案：农户初始 660 分（A 级），
+              农业企业初始 720 分（A 级），按时还款可持续提分。
+            </div>
+            <div class="form-error" v-if="error">{{ error }}</div>
+            <button class="btn btn-primary btn-block" type="submit" :disabled="loading">
+              {{ loading ? '注册中...' : '注册并登录' }}
+            </button>
+          </form>
+
+          <div class="auth-foot">
+            审批人员账号由金融机构后台开通，不开放自助注册
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script src="../vendor/vue.global.prod.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/constants.js"></script>
+  <script src="../js/db.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/components.js"></script>
+  <script src="../js/login.js"></script>
+</body>
+</html>

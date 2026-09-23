@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>贷款申请 - 智能惠农信贷系统</title>
+  <link rel="stylesheet" href="../css/common.css" />
+  <link rel="stylesheet" href="../css/pages.css" />
+</head>
+<body>
+  <div id="app" v-cloak>
+    <app-header active="apply-entry"></app-header>
+
+    <main class="page">
+      <div class="container">
+        <section class="page-banner">
+          <h1>惠农贷款在线申请</h1>
+          <p>
+            三步完成申请：选择产品与金额 → 填写申请人信息 → 确认提交。
+            提交后系统自动生成申请编号，金融机构将在 1~2 个工作日内完成初审。
+          </p>
+        </section>
+
+        <!-- 信用自适应提示：等级不同，额度上限 / 担保要求 / 审批时效不同 -->
+        <div class="credit-hint" v-if="creditHint">
+          <div class="credit-hint-title">你的专属授信政策</div>
+          <div class="credit-hint-text">{{ creditHint }}</div>
+        </div>
+
+        <!-- 步骤条 -->
+        <div class="step-bar card card-pad">
+          <div
+            class="step-bar-item"
+            v-for="(s, i) in stepTitles"
+            :key="i"
+            :class="{ active: step === i + 1, done: step > i + 1 }"
+          >
+            <div class="step-bar-no">{{ step > i + 1 ? '√' : i + 1 }}</div>
+            <div class="step-bar-text">{{ s }}</div>
+          </div>
+        </div>
+
+        <form class="apply-form card card-pad" @submit.prevent="onSubmit">
+          <!-- 第一步：产品与金额 -->
+          <section v-show="step === 1">
+            <div class="form-title">第一步：选择贷款产品与申请金额</div>
+
+            <div class="form-row">
+              <label class="form-label"><i class="req">*</i>贷款产品</label>
+              <div class="form-control">
+                <select class="select" v-model="form.productId" @change="onProductChange">
+                  <option value="">请选择贷款产品</option>
+                  <option v-for="p in db.products" :key="p.id" :value="p.id">
+                    {{ p.name }}（{{ p.rate }}% / {{ p.type }}）
+                  </option>
+                </select>
+                <div class="form-error" v-if="errors.productId">{{ errors.productId }}</div>
+                <div class="form-tip" v-else-if="productTip">{{ productTip }}</div>
+                <div class="form-tip" v-else>产品数据来自后端接口，与产品展示页保持同步</div>
+              </div>
+            </div>
+
+            <div class="product-brief" v-if="currentProduct">
+              <div><span>参考年利率</span><b class="text-primary">{{ currentProduct.rate }}%</b></div>
+              <div><span>额度范围</span><b>{{ U.amountRange(currentProduct.minAmount, currentProduct.maxAmount) }}</b></div>
+              <div><span>可选期限</span><b>{{ currentProduct.terms.join(' / ') }} 个月</b></div>
+              <div><span>担保方式</span><b>{{ currentProduct.guarantee }}</b></div>
+            </div>
+
+            <div class="form-row">
+              <label class="form-label"><i class="req">*</i>申请金额</label>
+              <div class="form-control">
+                <div class="input-group">
+                  <input class="input" type="text" v-model.trim="form.amount" placeholder="请输入整数金额" @blur="validateField('amount')" />
+                  <span class="input-addon">元</span>
+                </div>
+                <div class="form-error" v-if="errors.amount">{{ errors.amount }}</div>
+                <div class="form-tip" v-else-if="currentProduct">
+                  可申请 {{ U.thousand(currentProduct.minAmount) }} ~ {{ U.thousand(currentProduct.maxAmount) }} 元，
+                  {{ amountTip }}
+                </div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <label class="form-label"><i class="req">*</i>贷款期限</label>
+              <div class="form-control">
+                <select class="select" v-model="form.term" @change="validateField('term')">
+                  <option value="">请选择期限</option>
+                  <option v-for="t in termOptions" :key="t" :value="t">{{ t }} 个月</option>
+                </select>
+                <div class="form-error" v-if="errors.term">{{ errors.term }}</div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <label class="form-label"><i class="req">*</i>贷款用途</label>
+              <div class="form-control">
+                <textarea
+                  class="textarea"
+                  v-model.trim="form.purpose"
+                  placeholder="例如：购买春耕化肥、茶苗及支付管护人工费（不少于 5 个字）"
+                  @blur="validateField('purpose')"
+                ></textarea>
+                <div class="form-error" v-if="errors.purpose">{{ errors.purpose }}</div>
+                <div class="form-tip" v-else>贷款资金仅可用于农业生产经营活动</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- 第二步：申请人信息 -->
+          <section v-show="step === 2">
+            <div class="form-title">第二步：填写申请人信息</div>
+
+            <div class="form-row">
+              <label class="form-label"><i class="req">*</i>申请人姓名</label>
+              <div class="form-control">
+                <input class="input" type="text" v-model.trim="form.name" placeholder="请输入真实姓名" @blur="validateField('name')" />
+                <div class="form-error" v-if="errors.name">{{ errors.name }}</div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <label class="form-label"><i class="req">*</i>身份证号</label>
+              <div class="form-control">
+                <input class="input" type="text" maxlength="18" v-model.trim="form.idCard" placeholder="请输入 18 位身份证号" @blur="validateField('idCard')" />
+                <div class="form-error" v-if="errors.idCard">{{ errors.idCard }}</div>
+                <div class="form-tip" v-else>将按国家标准的校验位算法核验</div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <label class="form-label"><i class="req">*</i>手机号码</label>
+              <div class="form-control">
+                <input class="input" type="text" maxlength="11" v-model.trim="form.phone" placeholder="请输入 11 位手机号" @blur="validateField('phone')" />
+                <div class="form-error" v-if="errors.phone">{{ errors.phone }}</div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <label class="form-label"><i class="req">*</i>家庭住址</label>
+              <div class="form-control">
+                <input class="input" type="text" v-model.trim="form.address" placeholder="省 / 市 / 县 / 乡镇" @blur="validateField('address')" />
+                <div class="form-error" v-if="errors.address">{{ errors.address }}</div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <label class="form-label"><i class="req">*</i>经营类型</label>
+              <div class="form-control">
+                <select class="select" v-model="form.business" @change="validateField('business')">
+                  <option value="">请选择经营类型</option>
+                  <option v-for="b in businessOptions" :key="b" :value="b">{{ b }}</option>
+                </select>
+                <div class="form-error" v-if="errors.business">{{ errors.business }}</div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <label class="form-label">经营规模</label>
+              <div class="form-control">
+                <input class="input" type="text" v-model.trim="form.scale" placeholder="如：32 亩 / 社员 126 户" />
+                <div class="form-tip">选填，填写完整有助于提高审批额度</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- 第三步：确认提交 -->
+          <section v-show="step === 3">
+            <div class="form-title">第三步：确认信息并提交</div>
+
+            <div class="confirm-box">
+              <div class="confirm-row"><span>贷款产品</span><b>{{ currentProduct ? currentProduct.name : '-' }}</b></div>
+              <div class="confirm-row"><span>申请金额</span><b class="text-primary">{{ form.amount ? U.thousand(form.amount) + ' 元' : '-' }}</b></div>
+              <div class="confirm-row"><span>贷款期限</span><b>{{ form.term ? form.term + ' 个月' : '-' }}</b></div>
+              <div class="confirm-row"><span>贷款用途</span><b>{{ form.purpose || '-' }}</b></div>
+              <div class="confirm-row"><span>申请人</span><b>{{ form.name || '-' }}</b></div>
+              <div class="confirm-row"><span>身份证号</span><b>{{ maskIdCard || '-' }}</b></div>
+              <div class="confirm-row"><span>手机号码</span><b>{{ maskPhone || '-' }}</b></div>
+              <div class="confirm-row"><span>家庭住址</span><b>{{ form.address || '-' }}</b></div>
+              <div class="confirm-row"><span>经营类型</span><b>{{ form.business || '-' }}</b></div>
+              <div class="confirm-row" v-if="form.scale"><span>经营规模</span><b>{{ form.scale }}</b></div>
+            </div>
+
+            <div class="form-row">
+              <label class="form-label"><i class="req">*</i>还款来源</label>
+              <div class="form-control">
+                <textarea
+                  class="textarea"
+                  v-model.trim="form.repaySource"
+                  placeholder="例如：茶叶销售收入 + 合作社分红，年收入约 12 万元（不少于 5 个字）"
+                  @blur="validateField('repaySource')"
+                ></textarea>
+                <div class="form-error" v-if="errors.repaySource">{{ errors.repaySource }}</div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <label class="form-label"><i class="req">*</i>授权与承诺</label>
+              <div class="form-control">
+                <div class="checkbox">
+                  <input id="agreeCredit" type="checkbox" v-model="form.agreeCredit" @change="validateField('agreeCredit')" />
+                  <label for="agreeCredit">本人同意授权金融机构查询个人征信及涉农信用信息</label>
+                </div>
+                <div class="form-error" v-if="errors.agreeCredit">{{ errors.agreeCredit }}</div>
+                <div class="checkbox">
+                  <input id="agreeTruth" type="checkbox" v-model="form.agreeTruth" @change="validateField('agreeTruth')" />
+                  <label for="agreeTruth">本人承诺以上信息真实有效，贷款资金用于农业生产</label>
+                </div>
+                <div class="form-error" v-if="errors.agreeTruth">{{ errors.agreeTruth }}</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- 表单底部操作区 -->
+          <div class="form-actions">
+            <button type="button" class="btn btn-outline" v-if="step > 1" @click="prevStep">上一步</button>
+            <span class="form-step-tip">第 {{ step }} / 3 步</span>
+            <button type="button" class="btn btn-primary" v-if="step < 3" @click="nextStep">下一步</button>
+            <button type="submit" class="btn btn-primary" v-else :disabled="submitting">
+              {{ submitting ? '提交中...' : '确认提交申请' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </main>
+
+    <app-footer></app-footer>
+  </div>
+
+  <script src="../vendor/vue.global.prod.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/constants.js"></script>
+  <script src="../js/db.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/components.js"></script>
+  <script src="../js/apply.js"></script>
+</body>
+</html>
